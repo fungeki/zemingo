@@ -50,9 +50,11 @@ class NewsFeedCubit extends Cubit<NewsFeedState> {
       final newFeed = Map<NewsFeedRepoType, List<NewsModel>>.from(state.feed);
       newFeed[NewsFeedRepoType.cars] = feed;
       _callCarsLoop();
-      emit(state.copyWith(feed: newFeed));
+      emit(_refreshNewsFeed(newFeed));
     });
   }
+
+  NewsFeedState _refreshNewsFeed(Map<NewsFeedRepoType, List<NewsModel>> newFeed) => state.copyWith(feed: newFeed, status: NewsFeedStatus.success);
 
   void _buildSportsSubscription() {
     _sportsStreamSubscription ??= _sportsUseCase.stream.listen((feed) {
@@ -60,7 +62,7 @@ class NewsFeedCubit extends Cubit<NewsFeedState> {
       final newFeed = Map<NewsFeedRepoType, List<NewsModel>>.from(state.feed);
       newFeed[NewsFeedRepoType.sport] = feed;
       _callSportsLoop();
-      emit(state.copyWith(feed: newFeed));
+      emit(_refreshNewsFeed(newFeed));
     });
   }
 
@@ -70,7 +72,7 @@ class NewsFeedCubit extends Cubit<NewsFeedState> {
       final newFeed = Map<NewsFeedRepoType, List<NewsModel>>.from(state.feed);
       newFeed[NewsFeedRepoType.culture] = feed;
       _callCultureLoop();
-      emit(state.copyWith(feed: newFeed));
+      emit(_refreshNewsFeed(newFeed));
     });
   }
 
@@ -93,18 +95,25 @@ class NewsFeedCubit extends Cubit<NewsFeedState> {
 
   //loop handlers:
   Future _callCarsLoop() async {
-    Future.delayed(const Duration(seconds: 5))
-        .then((value) => _carsUseCase.call());
+    await Future.delayed(const Duration(seconds: 5));
+    _displayLoader();
+    _carsUseCase.call();
   }
 
   Future _callCultureLoop() async {
-    Future.delayed(const Duration(seconds: 5))
-        .then((value) => _cultureUseCase.call());
+    await Future.delayed(const Duration(seconds: 5));
+    _displayLoader();
+    _cultureUseCase.call();
   }
 
   Future _callSportsLoop() async {
-    Future.delayed(const Duration(seconds: 5))
-        .then((value) => _sportsUseCase.call());
+    await Future.delayed(const Duration(seconds: 5));
+    _displayLoader();
+    _sportsUseCase.call();
+  }
+
+  void _displayLoader() {
+    emit(state.copyWith(status: NewsFeedStatus.loading));
   }
 
   onTabChange(int index) {
